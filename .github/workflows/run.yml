@@ -69,3 +69,22 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
+
+      - name: Push site/ to gh-pages branch (durable archive)
+        # Pages-Artifact deploys expire; gh-pages branch keeps history in git.
+        # Next run's "Pull latest site/" step reads from this branch.
+        run: |
+          cd site
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -q -b gh-pages
+          git add -A
+          if git diff --cached --quiet; then
+            echo "site/ unchanged, skipping push"
+            exit 0
+          fi
+          git commit -q -m "site update $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+          git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

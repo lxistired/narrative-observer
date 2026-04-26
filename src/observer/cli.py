@@ -1,10 +1,10 @@
 """End-to-end orchestrator. One command runs all sources → merge → render."""
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import click
-from observer.config import DATA_DIR, SITE_DIR
+from observer.config import DATA_DIR, SITE_DIR, require_xai_key
 from observer.sources import xai, reddit, ptt, krx, naver
 from observer.synth import merge as synth_merge
 from observer.render import html as render_html
@@ -136,7 +136,8 @@ def cli():
 @click.option("--site-url", default=None, envvar="SITE_URL", help="Public URL for RSS")
 def run(markets: str, site_url: str | None):
     """Collect → merge → render → write site/."""
-    today = datetime.now().strftime("%Y-%m-%d")
+    require_xai_key()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     market_list = [m.strip() for m in markets.split(",") if m.strip()]
 
     collectors = {"us": collect_us, "tw": collect_tw, "kr": collect_kr}
@@ -151,10 +152,11 @@ def run(markets: str, site_url: str | None):
             print(f"[!] {m} collect failed: {e}")
             raw[m] = {"sources": {}, "counts": {"error": str(e)}, "raw_cost": 0}
 
-    # save raw snapshot
+    # save raw snapshot (UTC timestamp keeps filenames consistent across hosts)
     snap_dir = DATA_DIR / today
     snap_dir.mkdir(exist_ok=True)
-    (snap_dir / f"raw_{datetime.now().strftime('%H%M')}.json").write_text(
+    snap_hhmm = datetime.now(timezone.utc).strftime("%H%M")
+    (snap_dir / f"raw_{snap_hhmm}.json").write_text(
         json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
@@ -183,16 +185,29 @@ def run(markets: str, site_url: str | None):
             merged[m] = {"merged_text": f"_合并失败: {e}_\n\n原始数据请见快照文件。", "cost_usd": 0}
         raw_summaries[m] = data["counts"]
 
+    # persist merged JSON next to raw snapshot — protects against render failure
+    (snap_dir / f"merged_{snap_hhmm}.json").write_text(
+        json.dumps({"merged": merged, "total_cost": total_cost,
+                    "raw_summaries": raw_summaries},
+                   ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    # append cost ledger row (one row per run)
+    cost_csv = DATA_DIR / "cost.csv"
+    if not cost_csv.exists():
+        cost_csv.write_text("timestamp_utc,markets,total_cost_usd\n", encoding="utf-8")
+    with cost_csv.open("a", encoding="utf-8") as fp:
+        fp.write(f"{datetime.now(timezone.utc).isoformat(timespec='seconds')},"
+                 f"{'|'.join(market_list)},{total_cost:.6f}\n")
+
     # render
     print("[render] HTML …")
     out = render_html.render_report(merged, raw_summaries, total_cost)
     print("[render] index …")
     render_html.render_index()
     print("[render] feed …")
-    if site_url:
-        render_feed.render_feed(site_url=site_url)
-    else:
-        render_feed.render_feed()
+    render_feed.render_feed(site_url=site_url) if site_url else render_feed.render_feed()
 
     print(f"\n✓ done. total cost ${total_cost:.4f} → {out}")
 
@@ -201,7 +216,8 @@ def run(markets: str, site_url: str | None):
 def reindex():
     """Rebuild index.html + feed.xml from existing site/ files."""
     render_html.render_index()
-    render_feed.render_feed()
+    site_url = __import__("os").environ.get("SITE_URL")
+    render_feed.render_feed(site_url=site_url) if site_url else render_feed.render_feed()
 
 
 @cli.command()
@@ -209,6 +225,7 @@ def reindex():
 @click.option("--window", default=7, type=int)
 def probe(market: str, window: int):
     """Smoke test single market via xAI only (cheap)."""
+    require_xai_key()
     r = xai.query(market, window_days=window)
     print(f"cost ${r['cost_usd']:.4f}, {r['x_search_calls']} searches\n")
     print(r["text"])

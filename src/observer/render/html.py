@@ -1,5 +1,5 @@
 """Render report HTML + index from collected market data (structured)."""
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from observer.config import ROOT, SITE_DIR
@@ -102,11 +102,11 @@ def _issue_meta(now: datetime, idx: int) -> dict:
 def render_report(merged_results: dict, raw_summaries: dict, total_cost: float) -> Path:
     env = Environment(
         loader=FileSystemLoader(str(ROOT / "templates")),
-        autoescape=select_autoescape(["html"]),
+        autoescape=select_autoescape(enabled_extensions=("html", "html.j2", "j2"), default=True),
     )
     tpl = env.get_template("report.html.j2")
 
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     file_ts = now.strftime("%Y-%m-%d_%H%M")
     issue_number = _existing_issue_count() + 1
 
@@ -164,7 +164,7 @@ def render_report(merged_results: dict, raw_summaries: dict, total_cost: float) 
 def render_index() -> Path:
     env = Environment(
         loader=FileSystemLoader(str(ROOT / "templates")),
-        autoescape=select_autoescape(["html"]),
+        autoescape=select_autoescape(enabled_extensions=("html", "html.j2", "j2"), default=True),
     )
     tpl = env.get_template("index.html.j2")
 
