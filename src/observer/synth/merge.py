@@ -6,6 +6,15 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from observer.config import XAI_API_KEY, XAI_BASE_URL, XAI_MODEL
 
 
+VALID_HEAT = {"high", "mid", "low"}
+VALID_TEMPO = {"new", "accelerating", "sustained", "fading"}
+VALID_SOURCES = {
+    "xai_x_24h", "xai_x_7d",
+    "reddit_wsb", "reddit_stocks", "reddit_investing", "reddit_cryptocurrency", "reddit",
+    "ptt", "krx", "naver_themes", "naver",
+}
+
+
 SCHEMA_DOC = """{
   "themes": [
     {
@@ -91,18 +100,157 @@ def _format_sources(sources: dict) -> str:
 
 
 def _extract_json(text: str) -> dict:
-    """Extract first JSON object from possibly-wrapped LLM output."""
+    """Extract first JSON object from possibly-wrapped LLM output.
+
+    Handles three common Grok shapes:
+      1. raw JSON
+      2. ```json\n{...}\n``` fenced block (possibly with prose before/after)
+      3. JSON with trailing prose
+    """
     text = text.strip()
-    # strip ```json fences
-    fence = re.match(r"^```(?:json)?\s*\n?(.+?)\n?```\s*$", text, re.DOTALL)
-    if fence:
-        text = fence.group(1).strip()
-    # find first '{' to last '}'
+    # 1. fenced block — match first ```json ... ``` even if prose surrounds it
+    m = re.search(r"```(?:json)?\s*\n(.+?)\n```", text, re.DOTALL)
+    if m:
+        text = m.group(1).strip()
+    # 2. find balanced first-{ to matching-}
     start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1:
-        raise ValueError(f"no JSON object found in:\n{text[:500]}")
+    if start == -1:
+        raise ValueError(f"no '{{' found in:\n{text[:500]}")
+    depth = 0
+    end = -1
+    in_string = False
+    escape = False
+    for i in range(start, len(text)):
+        ch = text[i]
+        if escape:
+            escape = False
+            continue
+        if ch == "\\":
+            escape = True
+            continue
+        if ch == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                end = i
+                break
+    if end == -1:
+        raise ValueError(f"unbalanced JSON braces in:\n{text[:500]}")
     return json.loads(text[start:end + 1])
+
+
+def _validate_theme(t: dict) -> tuple[dict | None, list[str]]:
+    """Validate one theme. Returns (cleaned_theme | None, list_of_warnings).
+
+    Returns None if theme is unsalvageable. Otherwise returns a cleaned dict
+    with enums coerced to defaults if invalid, and a list of warnings logged.
+    """
+    warnings = []
+
+    if not isinstance(t, dict):
+        return None, [f"theme is not a dict: {type(t).__name__}"]
+
+    name = t.get("name")
+    if not isinstance(name, str) or not name.strip():
+        return None, ["theme missing required 'name'"]
+
+    out = dict(t)
+
+    # heat must be in enum, else default to "low" with warning
+    heat = out.get("heat")
+    if heat not in VALID_HEAT:
+        warnings.append(f"theme {name!r}: invalid heat={heat!r} → defaulting to 'low'")
+        out["heat"] = "low"
+
+    # tempo must be in enum, else default by hot_24h/hot_7d combination
+    hot_24h = bool(out.get("hot_24h"))
+    hot_7d = bool(out.get("hot_7d"))
+    out["hot_24h"] = hot_24h
+    out["hot_7d"] = hot_7d
+
+    if not hot_24h and not hot_7d:
+        # neither window — skip per prompt rule
+        return None, [f"theme {name!r}: not hot in either window, dropping"]
+
+    tempo = out.get("tempo")
+    if tempo not in VALID_TEMPO:
+        # derive from window flags
+        if hot_24h and not hot_7d:
+            out["tempo"] = "new"
+        elif hot_24h and hot_7d:
+            out["tempo"] = "sustained"
+        elif not hot_24h and hot_7d:
+            out["tempo"] = "fading"
+        else:
+            out["tempo"] = "new"  # unreachable given guard above
+        warnings.append(f"theme {name!r}: invalid tempo={tempo!r} → derived {out['tempo']!r}")
+
+    # cross_source coerce to bool
+    out["cross_source"] = bool(out.get("cross_source"))
+
+    # sources: keep only known + ensure list
+    raw_sources = out.get("sources") or []
+    if isinstance(raw_sources, str):
+        raw_sources = [raw_sources]
+    cleaned_sources = []
+    for s in raw_sources:
+        if isinstance(s, str) and s in VALID_SOURCES:
+            cleaned_sources.append(s)
+        elif isinstance(s, str):
+            warnings.append(f"theme {name!r}: unknown source {s!r} (kept anyway)")
+            cleaned_sources.append(s)
+    out["sources"] = cleaned_sources
+
+    # tickers: must be list of dicts with at least 'code'
+    raw_tickers = out.get("tickers") or []
+    if isinstance(raw_tickers, str):
+        raw_tickers = [raw_tickers]
+    cleaned_tickers = []
+    for tk in raw_tickers:
+        if isinstance(tk, str):
+            cleaned_tickers.append({"code": tk, "name_cn": "", "name_native": ""})
+        elif isinstance(tk, dict) and tk.get("code"):
+            cleaned_tickers.append({
+                "code": str(tk.get("code", "")),
+                "name_cn": str(tk.get("name_cn") or ""),
+                "name_native": str(tk.get("name_native") or ""),
+            })
+        else:
+            warnings.append(f"theme {name!r}: dropping malformed ticker {tk!r}")
+    out["tickers"] = cleaned_tickers
+
+    # evidence: list of strings
+    raw_evidence = out.get("evidence") or []
+    if isinstance(raw_evidence, str):
+        raw_evidence = [raw_evidence]
+    out["evidence"] = [str(e) for e in raw_evidence if e]
+
+    # narrative: string
+    nar = out.get("narrative")
+    if not isinstance(nar, str):
+        out["narrative"] = "" if nar is None else str(nar)
+
+    return out, warnings
+
+
+def validate_themes(raw_themes: list) -> tuple[list[dict], list[str]]:
+    """Validate a list of themes. Returns (valid_themes, all_warnings)."""
+    if not isinstance(raw_themes, list):
+        return [], [f"themes is not a list: {type(raw_themes).__name__}"]
+    valid = []
+    all_warnings = []
+    for t in raw_themes:
+        cleaned, warns = _validate_theme(t)
+        all_warnings.extend(warns)
+        if cleaned is not None:
+            valid.append(cleaned)
+    return valid, all_warnings
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=10))
@@ -139,18 +287,24 @@ def merge_market(market: str, market_label: str, today: str, sources: dict) -> d
     try:
         parsed = _extract_json(text)
     except Exception as e:
-        # fallback: keep as raw text so caller can show something
         return {
             "market": market,
             "themes": [],
             "raw_text": text,
             "parse_error": str(e),
             "cost_usd": cost,
+            "warnings": [],
         }
 
-    themes = parsed.get("themes", [])
+    raw_themes = parsed.get("themes", [])
+    valid_themes, warnings = validate_themes(raw_themes)
+    for w in warnings:
+        print(f"  ⚠ schema: {w}")
+
     return {
         "market": market,
-        "themes": themes,
+        "themes": valid_themes,
         "cost_usd": cost,
+        "warnings": warnings,
+        "themes_dropped": len(raw_themes) - len(valid_themes),
     }

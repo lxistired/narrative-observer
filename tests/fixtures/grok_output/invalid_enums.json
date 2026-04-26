@@ -1,0 +1,28 @@
+{
+  "themes": [
+    {
+      "name": "枚举无效题材",
+      "heat": "scorching",
+      "cross_source": true,
+      "hot_24h": true,
+      "hot_7d": false,
+      "tempo": "rising",
+      "tickers": [{"code": "$Z"}],
+      "narrative": "heat 和 tempo 都是 Grok 编造的",
+      "evidence": ["1"],
+      "sources": ["xai_x_24h"]
+    },
+    {
+      "name": "两窗口都没热",
+      "heat": "high",
+      "cross_source": false,
+      "hot_24h": false,
+      "hot_7d": false,
+      "tempo": "new",
+      "tickers": [],
+      "narrative": "应该被丢弃",
+      "evidence": [],
+      "sources": []
+    }
+  ]
+}

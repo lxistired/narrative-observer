@@ -1,0 +1,16 @@
+{
+  "themes": [
+    {
+      "name": "字符串证据题材",
+      "heat": "high",
+      "cross_source": true,
+      "hot_24h": true,
+      "hot_7d": true,
+      "tempo": "accelerating",
+      "tickers": [{"code": "$Y"}],
+      "narrative": "证据本应是数组但 Grok 给了字符串",
+      "evidence": "这是一整段文字而不是数组",
+      "sources": "xai_x_24h"
+    }
+  ]
+}

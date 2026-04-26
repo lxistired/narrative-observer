@@ -1,0 +1,18 @@
+{
+  "themes": [
+    {
+      "name": "尾随题材",
+      "heat": "mid",
+      "cross_source": true,
+      "hot_24h": true,
+      "hot_7d": true,
+      "tempo": "sustained",
+      "tickers": [{"code": "$X", "name_cn": "公司X"}],
+      "narrative": "本周持续",
+      "evidence": [],
+      "sources": []
+    }
+  ]
+}
+
+注意：以上是 5 个最热题材，按热度排序。

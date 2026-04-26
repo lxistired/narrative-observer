@@ -1,0 +1,20 @@
+{
+  "themes": [
+    {
+      "name": "AI 半导体",
+      "name_native": "AI semiconductors",
+      "heat": "high",
+      "cross_source": true,
+      "hot_24h": true,
+      "hot_7d": true,
+      "tempo": "accelerating",
+      "tickers": [
+        {"code": "$NVDA", "name_cn": "英伟达", "name_native": "NVIDIA"},
+        {"code": "$AMD", "name_cn": "超微", "name_native": "AMD"}
+      ],
+      "narrative": "散户押注 AI 数据中心持续扩容。",
+      "evidence": ["WSB 帖子 1200 赞", "X 上 unusual_whales 提及多次"],
+      "sources": ["xai_x_24h", "reddit_wsb"]
+    }
+  ]
+}

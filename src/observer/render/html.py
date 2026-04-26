@@ -107,7 +107,8 @@ def render_report(merged_results: dict, raw_summaries: dict, total_cost: float) 
     tpl = env.get_template("report.html.j2")
 
     now = datetime.now(timezone.utc)
-    file_ts = now.strftime("%Y-%m-%d_%H%M")
+    # HHMMSS to avoid same-minute collisions on rapid manual reruns
+    file_ts = now.strftime("%Y-%m-%d_%H%M%S")
     issue_number = _existing_issue_count() + 1
 
     markets = []
@@ -138,8 +139,14 @@ def render_report(merged_results: dict, raw_summaries: dict, total_cost: float) 
             "themes": themes,
             "stat_cross": stats["cross"],
             "stat_tickers": stats["tickers"],
-            "raw_text": m.get("raw_text"),     # fallback if JSON parse failed
+            # status banners
+            "all_sources_failed": bool(m.get("all_sources_failed")),
+            "merge_error": m.get("merge_error"),
+            "raw_text": m.get("raw_text"),
             "parse_error": m.get("parse_error"),
+            "errors": m.get("errors") or [],
+            "warnings": m.get("warnings") or [],
+            "themes_dropped": m.get("themes_dropped", 0),
         })
 
     heat_top = _build_heat_top(markets, top_n=6)
@@ -175,8 +182,11 @@ def render_index() -> Path:
         stem = f.stem
         try:
             d, t = stem.split("_")
-            ts = f"{d} · {t[:2]}:{t[2:]}"
-        except ValueError:
+            # accept HHMM (legacy) or HHMMSS (new)
+            hh = t[:2]
+            mm = t[2:4]
+            ts = f"{d} · {hh}:{mm} UTC"
+        except (ValueError, IndexError):
             ts = stem
         number = total - i
         reports.append({

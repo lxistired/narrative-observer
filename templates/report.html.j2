@@ -549,6 +549,44 @@
     color: var(--ink-soft);
     white-space: pre-wrap;
   }
+
+  /* status banners — failure / degraded */
+  .status-banner {
+    margin: 0 0 18px;
+    padding: 12px 16px;
+    border-radius: 3px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .status-banner .banner-title {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .status-banner .banner-body { color: var(--ink-soft); }
+  .status-banner .banner-body code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    background: var(--bg-elev);
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+  .status-banner .banner-errors {
+    margin: 6px 0 0; padding-left: 18px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+  }
+  .status-banner.banner-failed {
+    background: var(--hot-glow);
+    border-left: 3px solid var(--hot);
+  }
+  .status-banner.banner-failed .banner-title { color: var(--hot); }
+  .status-banner.banner-degraded {
+    background: rgba(217,166,74,0.10);
+    border-left: 3px solid var(--warn);
+  }
+  .status-banner.banner-degraded .banner-title { color: var(--warn); }
 {% endblock %}
 
 {% block main %}
@@ -604,6 +642,43 @@
           {% if m.stat_tickers is defined %}<div class="stat"><span class="v mono">{{ m.stat_tickers }}</span><span>标的</span></div>{% endif %}
         </div>
       </header>
+
+      {% if m.all_sources_failed %}
+      <div class="status-banner banner-failed">
+        <div class="banner-title">数据源全部失败</div>
+        <div class="banner-body">
+          本市场所有数据源在本次拉取中都不可用。题材列表无法生成。
+          {% if m.errors %}
+          <ul class="banner-errors">
+            {% for e in m.errors %}<li>{{ e }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+      </div>
+      {% elif m.merge_error %}
+      <div class="status-banner banner-failed">
+        <div class="banner-title">合成失败</div>
+        <div class="banner-body">
+          数据已采集，但题材合成步骤报错：<code>{{ m.merge_error }}</code>。
+          快照见 <code>data/&lt;date&gt;/raw_*.json</code>。
+        </div>
+      </div>
+      {% elif m.parse_error %}
+      <div class="status-banner banner-degraded">
+        <div class="banner-title">合成结果无法解析</div>
+        <div class="banner-body">JSON 解析失败：<code>{{ m.parse_error }}</code>。下面展示原文。</div>
+      </div>
+      {% endif %}
+
+      {% if m.themes_dropped and m.themes_dropped > 0 %}
+      <div class="status-banner banner-degraded">
+        <div class="banner-body">⚠ schema 校验丢弃了 {{ m.themes_dropped }} 个无效题材。</div>
+      </div>
+      {% elif m.errors and not m.all_sources_failed %}
+      <div class="status-banner banner-degraded">
+        <div class="banner-body">部分数据源失败：{% for e in m.errors %}<code>{{ e }}</code>{% if not loop.last %} · {% endif %}{% endfor %}</div>
+      </div>
+      {% endif %}
 
       {% if m.themes %}
       <div class="themes">

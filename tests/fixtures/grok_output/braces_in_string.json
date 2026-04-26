@@ -1,0 +1,16 @@
+{
+  "themes": [
+    {
+      "name": "题材内含大括号",
+      "heat": "mid",
+      "cross_source": false,
+      "hot_24h": true,
+      "hot_7d": true,
+      "tempo": "sustained",
+      "tickers": [{"code": "$BR"}],
+      "narrative": "这里有 {curly braces} 和 } 字符 (考验 _extract_json)",
+      "evidence": [],
+      "sources": []
+    }
+  ]
+}

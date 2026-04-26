@@ -1,0 +1,18 @@
+```json
+{
+  "themes": [
+    {
+      "name": "新冒头题材",
+      "heat": "mid",
+      "cross_source": false,
+      "hot_24h": true,
+      "hot_7d": false,
+      "tempo": "new",
+      "tickers": [{"code": "$NEW", "name_cn": "新公司"}],
+      "narrative": "刚冒头",
+      "evidence": ["证据1"],
+      "sources": ["xai_x_24h"]
+    }
+  ]
+}
+```

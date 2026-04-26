@@ -1,23 +1,32 @@
-"""KRX retail (개인) net-buy data via pykrx."""
-import os
-from contextlib import contextmanager
+"""KRX retail (개인) net-buy data via pykrx.
+
+KRX (data.krx.co.kr) is reachable directly from CN; Clash typically misroutes it
+through proxies that can't reach Korean ranges. Rather than mutating global env
+vars (race-prone), we configure the pykrx requests.Session once at import time
+to bypass any system proxy.
+"""
 from datetime import date, timedelta
+
+import requests
 from pykrx import stock
+from pykrx.website.comm.auth import get_auth_session
 
 
-PROXY_ENV_KEYS = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy")
+def _disable_session_proxy() -> None:
+    """Force the pykrx singleton session to ignore system proxy settings.
+
+    Idempotent. Safe to call multiple times. Thread-safe (only mutates session
+    attributes, never global env vars).
+    """
+    krx = get_auth_session()
+    if krx is not None and getattr(krx, "session", None) is not None:
+        sess: requests.Session = krx.session
+        sess.trust_env = False
+        sess.proxies = {"http": None, "https": None}
 
 
-@contextmanager
-def _no_proxy():
-    """Temporarily clear proxy env vars — KRX is reachable directly from CN; clash misroutes it."""
-    saved = {k: os.environ.pop(k, None) for k in PROXY_ENV_KEYS}
-    try:
-        yield
-    finally:
-        for k, v in saved.items():
-            if v is not None:
-                os.environ[k] = v
+# Apply at import time so first call already bypasses proxy
+_disable_session_proxy()
 
 
 def _last_trading_day() -> str:
@@ -33,10 +42,12 @@ def fetch_retail_net_buy(top_n: int = 30, market: str = "ALL") -> list[dict]:
 
     market: 'KOSPI'|'KOSDAQ'|'ALL'
     """
+    # Re-apply in case pykrx rebuilt the session (e.g. token refresh)
+    _disable_session_proxy()
+
     d = _last_trading_day()
     try:
-        with _no_proxy():
-            df = stock.get_market_net_purchases_of_equities(d, d, market, "개인")
+        df = stock.get_market_net_purchases_of_equities(d, d, market, "개인")
     except Exception as e:
         print(f"  ! KRX fetch failed for {d}: {e}")
         return []

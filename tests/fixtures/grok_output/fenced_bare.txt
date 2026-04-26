@@ -1,0 +1,22 @@
+Here is the analysis you requested:
+
+```
+{
+  "themes": [
+    {
+      "name": "题材A",
+      "heat": "low",
+      "cross_source": false,
+      "hot_24h": false,
+      "hot_7d": true,
+      "tempo": "fading",
+      "tickers": [],
+      "narrative": "退潮中",
+      "evidence": [],
+      "sources": ["xai_x_7d"]
+    }
+  ]
+}
+```
+
+Hope this helps.

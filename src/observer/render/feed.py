@@ -16,7 +16,9 @@ SITE_URL_PLACEHOLDER = "https://example.github.io/observer"
 def _parse_ts(stem: str) -> datetime:
     try:
         d, t = stem.split("_")
-        return datetime.strptime(f"{d}_{t}", "%Y-%m-%d_%H%M").replace(tzinfo=timezone.utc)
+        # accept both legacy HHMM and new HHMMSS
+        fmt = "%Y-%m-%d_%H%M%S" if len(t) == 6 else "%Y-%m-%d_%H%M"
+        return datetime.strptime(f"{d}_{t}", fmt).replace(tzinfo=timezone.utc)
     except Exception:
         return datetime.now(timezone.utc)
 
