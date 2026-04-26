@@ -14,6 +14,37 @@ MARKET_LABELS = {
 HEAT_RANK = {"high": 3, "mid": 2, "low": 1}
 
 
+def _to_list(v) -> list:
+    """Coerce to list. None → []. str → [str]. list → list. dict → [dict]."""
+    if v is None:
+        return []
+    if isinstance(v, str):
+        return [v] if v.strip() else []
+    if isinstance(v, list):
+        return v
+    return [v]
+
+
+def _normalize_theme(t: dict) -> dict:
+    """Defensive: Grok occasionally returns string where list expected. Coerce."""
+    t = dict(t)  # shallow copy
+    t["evidence"] = _to_list(t.get("evidence"))
+    t["sources"] = _to_list(t.get("sources"))
+    raw_tickers = _to_list(t.get("tickers"))
+    norm_tickers = []
+    for tk in raw_tickers:
+        if isinstance(tk, str):
+            norm_tickers.append({"code": tk, "name_cn": "", "name_native": ""})
+        elif isinstance(tk, dict):
+            norm_tickers.append(tk)
+    t["tickers"] = norm_tickers
+    # boolean-ish coercion
+    t["cross_source"] = bool(t.get("cross_source"))
+    t["hot_24h"] = bool(t.get("hot_24h"))
+    t["hot_7d"]  = bool(t.get("hot_7d"))
+    return t
+
+
 def _build_heat_top(markets: list, top_n: int = 6) -> list:
     """Cross-market top themes for the heat strip. Sort by heat then cross_source."""
     pool = []
@@ -96,7 +127,7 @@ def render_report(merged_results: dict, raw_summaries: dict, total_cost: float) 
                         meta_bits.append(f"${info['cost']:.4f}")
         meta = " · ".join(meta_bits) if meta_bits else "merged"
 
-        themes = m.get("themes", [])
+        themes = [_normalize_theme(t) for t in m.get("themes", [])]
         stats = _market_stats(themes)
 
         markets.append({

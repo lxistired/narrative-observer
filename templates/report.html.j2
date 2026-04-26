@@ -240,11 +240,29 @@
   }
   .market-head .stat-strip .stat {
     display: flex; flex-direction: column; gap: 2px;
+    text-align: right;
   }
   .market-head .stat-strip .stat .v { color: var(--ink); font-weight: 600; font-size: 13px; }
   @media (max-width: 720px) {
-    .market-head h2 { font-size: 28px; }
-    .market-head .stat-strip { font-size: 9.5px; gap: 12px; }
+    /* market section needs breathing room below sticky tab rail */
+    .market { padding-top: 28px; scroll-margin-top: 80px; }
+    /* stack head: title row, then stats row below */
+    .market-head {
+      grid-template-columns: 1fr;
+      gap: 14px;
+      align-items: start;
+      padding-bottom: 12px;
+      margin-bottom: 22px;
+    }
+    .market-head h2 .en { font-size: 10px; margin-bottom: 4px; letter-spacing: 0.16em; }
+    .market-head h2 { font-size: 32px; }
+    .market-head .stat-strip {
+      justify-content: flex-start;
+      gap: 18px;
+      font-size: 10px;
+    }
+    .market-head .stat-strip .stat { text-align: left; flex-direction: row; gap: 5px; align-items: baseline; }
+    .market-head .stat-strip .stat .v { font-size: 14px; }
   }
 
   /* ============================================================
