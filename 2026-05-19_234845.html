@@ -1,0 +1,1998 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hans" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0d10" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)">
+<title>Issue No. 25 · 叙事观测</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     Tape · 散户叙事观测
+     Dark-first financial terminal × 东方留白
+     ============================================================ */
+
+  :root[data-theme="dark"] {
+    --bg:        #0c0d10;
+    --bg-elev:   #15171c;
+    --bg-card:   #131519;
+    --ink:       #f0ebe1;
+    --ink-soft:  #b8b0a2;
+    --ink-mute:  #6b6558;
+    --ink-dim:   #3a3833;
+    --rule:      #23252b;
+    --rule-soft: #1a1c21;
+    --hot:       #e64d3a;   /* 朱砂 — heat */
+    --hot-glow:  rgba(230,77,58,0.18);
+    --cool:      #5b8db8;   /* 石青 — data */
+    --warn:      #d9a64a;   /* 雌黄 — warning/mid */
+    --up:        #e64d3a;   /* 中文涨红 */
+    --down:      #4ea884;   /* 中文跌绿 */
+  }
+  :root[data-theme="light"] {
+    --bg:        #f6f1e6;
+    --bg-elev:   #ede5d2;
+    --bg-card:   #fbf6ea;
+    --ink:       #1a140d;
+    --ink-soft:  #403629;
+    --ink-mute:  #857968;
+    --ink-dim:   #c8bfab;
+    --rule:      #d4c9b3;
+    --rule-soft: #e3dac4;
+    --hot:       #c4382a;
+    --hot-glow:  rgba(196,56,42,0.12);
+    --cool:      #356588;
+    --warn:      #a07725;
+    --up:        #c4382a;
+    --down:      #2f7a5c;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", "Noto Serif SC", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    font-weight: 400;
+  }
+  ::selection { background: var(--hot); color: #fff; }
+
+  /* numeric-feeling mono */
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-feature-settings: "tnum"; }
+  .serif { font-family: "Noto Serif SC", "Songti SC", serif; }
+
+  /* ============================================================
+     LAYOUT
+     ============================================================ */
+  .page { min-height: 100vh; display: flex; flex-direction: column; }
+  .shell { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 32px; }
+  @media (max-width: 720px) { .shell { padding: 0 18px; } }
+
+  /* ============================================================
+     MASTHEAD — terminal-like, single line
+     ============================================================ */
+  .masthead {
+    border-bottom: 1px solid var(--rule);
+    padding: 18px 0;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .brand {
+    display: flex; align-items: baseline; gap: 10px;
+    text-decoration: none; color: var(--ink);
+  }
+  .brand .mark {
+    width: 22px; height: 22px;
+    background: var(--hot);
+    border-radius: 2px;
+    display: inline-block;
+    transform: translateY(4px);
+    box-shadow: 0 0 0 4px var(--hot-glow);
+  }
+  .brand .name-cn {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: 20px;
+    letter-spacing: 0.04em;
+  }
+  .brand .tagline {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 400;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--ink-mute);
+    border-left: 1px solid var(--rule);
+    padding-left: 10px;
+  }
+  .topnav { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  .topnav a, .topnav button {
+    background: none; border: 1px solid transparent;
+    color: var(--ink-soft);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 6px 10px; cursor: pointer;
+    text-decoration: none;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .topnav a:hover, .topnav button:hover { color: var(--hot); }
+  .topnav .theme-toggle {
+    border: 1px solid var(--rule);
+    width: 32px; height: 32px; padding: 0;
+    border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .topnav .theme-toggle:hover { border-color: var(--hot); }
+
+  @media (max-width: 720px) {
+    .masthead { gap: 12px; }
+    .brand .tagline { display: none; }
+    .topnav a:not(.theme-toggle) { display: none; }
+  }
+
+  /* ============================================================
+     COLOPHON / FOOTER
+     ============================================================ */
+  .colophon {
+    margin-top: 96px;
+    padding: 24px 0 36px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-mute);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+  }
+  .colophon .row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: baseline; }
+  .colophon .src { color: var(--ink-mute); }
+  .colophon .disclaimer { font-style: italic; }
+
+  
+  /* ============================================================
+     COVER — 大字号 + 一行高密度元数据
+     ============================================================ */
+  .cover {
+    padding: 56px 0 40px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .cover .meta-row {
+    display: flex; gap: 18px; align-items: center; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 28px;
+  }
+  .cover .meta-row .vol { color: var(--hot); font-weight: 600; }
+  .cover .meta-row .pulse {
+    display: inline-block; width: 7px; height: 7px;
+    background: var(--hot); border-radius: 50%;
+    box-shadow: 0 0 0 0 var(--hot);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 var(--hot-glow); }
+    70%  { box-shadow: 0 0 0 10px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  .cover h1 {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: clamp(44px, 7.5vw, 96px);
+    line-height: 0.96;
+    letter-spacing: -0.025em;
+    margin: 0 0 20px;
+    color: var(--ink);
+  }
+  .cover h1 .accent {
+    color: var(--hot);
+    font-style: italic;
+    font-weight: 700;
+  }
+  .cover h1 .quiet {
+    color: var(--ink-mute);
+    font-weight: 400;
+  }
+  .cover .deck {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0;
+  }
+
+  /* ============================================================
+     TOP HEAT STRIP — Today's hottest themes across all markets
+     A horizontal scrolling list of top 5 themes, eye-catching
+     ============================================================ */
+  .heat-strip {
+    margin: 36px 0 8px;
+    padding: 22px 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .heat-strip-label {
+    display: flex; align-items: center; gap: 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 16px;
+  }
+  .heat-strip-label::after {
+    content: ""; flex: 1; height: 1px;
+    background: linear-gradient(to right, var(--rule), transparent);
+  }
+  .heat-strip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+  }
+  .heat-tile {
+    background: var(--bg);
+    padding: 16px 18px 18px;
+    text-decoration: none; color: inherit;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative;
+    transition: background .15s;
+    overflow: hidden;
+  }
+  .heat-tile::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--hot);
+    transform: scaleY(var(--hot-pct, 1));
+    transform-origin: bottom;
+  }
+  .heat-tile:hover { background: var(--bg-elev); }
+  .heat-tile .rank {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.12em;
+    color: var(--ink-mute);
+  }
+  .heat-tile .rank .market { color: var(--hot); margin-right: 6px; font-weight: 600; }
+  .heat-tile .name {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 700;
+    font-size: 17px; line-height: 1.25;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+  .heat-tile .ticks {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    color: var(--ink-mute);
+    letter-spacing: 0.04em;
+    margin-top: auto;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ============================================================
+     MARKET LAYOUT — sticky left rail + content
+     ============================================================ */
+  .markets-wrap {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 56px;
+    margin-top: 56px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .markets-wrap { grid-template-columns: 1fr; gap: 0; }
+  }
+
+  .rail {
+    position: sticky; top: 24px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  @media (max-width: 900px) {
+    .rail {
+      position: sticky; top: 0; z-index: 50;
+      flex-direction: row; gap: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--rule);
+      margin: 24px -18px 0;
+      padding: 0 18px;
+      overflow-x: auto;
+    }
+  }
+  .rail-item {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 10px;
+    align-items: baseline;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    text-decoration: none; color: var(--ink-soft);
+    transition: color .15s;
+  }
+  .rail-item:hover { color: var(--ink); }
+  .rail-item.active { color: var(--hot); }
+  .rail-item.active .rail-num { color: var(--hot); }
+  .rail-item .rail-num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; color: var(--ink-mute);
+    letter-spacing: 0.08em;
+  }
+  .rail-item .rail-cn {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 700; font-size: 18px;
+    letter-spacing: 0.02em;
+  }
+  .rail-item .rail-en {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-mute);
+    grid-column: 2;
+    margin-top: -2px;
+  }
+  .rail-item .rail-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px; color: var(--ink-mute);
+    grid-row: 1;
+  }
+  @media (max-width: 900px) {
+    .rail-item {
+      grid-template-columns: auto auto;
+      gap: 6px 10px;
+      padding: 14px 18px;
+      border-bottom: none;
+      border-right: 1px solid var(--rule-soft);
+      white-space: nowrap;
+    }
+    .rail-item .rail-en, .rail-item .rail-num { display: none; }
+    .rail-item.active { border-bottom: 2px solid var(--hot); }
+  }
+
+  /* ============================================================
+     MARKET SECTION
+     ============================================================ */
+  .market {
+    padding-bottom: 64px;
+    scroll-margin-top: 24px;
+  }
+  .market-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: end;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 16px;
+    margin-bottom: 28px;
+  }
+  .market-head h2 {
+    margin: 0;
+    font-family: "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: 36px;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .market-head h2 .en {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .market-head .stat-strip {
+    display: flex; gap: 20px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px; color: var(--ink-mute);
+    letter-spacing: 0.04em;
+    text-align: right;
+  }
+  .market-head .stat-strip .stat {
+    display: flex; flex-direction: column; gap: 2px;
+    text-align: right;
+  }
+  .market-head .stat-strip .stat .v { color: var(--ink); font-weight: 600; font-size: 13px; }
+  @media (max-width: 720px) {
+    /* market section needs breathing room below sticky tab rail */
+    .market { padding-top: 28px; scroll-margin-top: 80px; }
+    /* stack head: title row, then stats row below */
+    .market-head {
+      grid-template-columns: 1fr;
+      gap: 14px;
+      align-items: start;
+      padding-bottom: 12px;
+      margin-bottom: 22px;
+    }
+    .market-head h2 .en { font-size: 10px; margin-bottom: 4px; letter-spacing: 0.16em; }
+    .market-head h2 { font-size: 32px; }
+    .market-head .stat-strip {
+      justify-content: flex-start;
+      gap: 18px;
+      font-size: 10px;
+    }
+    .market-head .stat-strip .stat { text-align: left; flex-direction: row; gap: 5px; align-items: baseline; }
+    .market-head .stat-strip .stat .v { font-size: 14px; }
+  }
+
+  /* ============================================================
+     THEME CARD — 主角
+     ============================================================ */
+  .themes { display: grid; grid-template-columns: 1fr; gap: 0; }
+  .theme {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 0 20px;
+    padding: 24px 0 28px;
+    border-bottom: 1px solid var(--rule-soft);
+    position: relative;
+  }
+  .theme:last-child { border-bottom: none; }
+
+  .theme .num-block {
+    display: flex; flex-direction: column; gap: 8px;
+    padding-top: 4px;
+  }
+  .theme .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink-mute);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .theme.cross .num { color: var(--hot); }
+
+  /* heat bar — vertical gauge */
+  .heat-gauge {
+    width: 4px;
+    height: 56px;
+    background: var(--rule-soft);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .heat-gauge::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: var(--gauge-color, var(--ink-mute));
+    height: var(--gauge-h, 30%);
+  }
+  .theme[data-heat="high"] .heat-gauge { --gauge-color: var(--hot); --gauge-h: 100%; }
+  .theme[data-heat="mid"]  .heat-gauge { --gauge-color: var(--warn); --gauge-h: 60%; }
+  .theme[data-heat="low"]  .heat-gauge { --gauge-color: var(--ink-mute); --gauge-h: 28%; }
+
+  .theme-body { min-width: 0; }
+
+  .theme-head {
+    display: flex; align-items: baseline; flex-wrap: wrap;
+    gap: 10px 14px;
+    margin-bottom: 14px;
+  }
+  .theme-name {
+    margin: 0;
+    font-family: "Noto Serif SC", serif;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.15;
+    letter-spacing: -0.012em;
+    color: var(--ink);
+  }
+  .theme-name .native {
+    display: inline;
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-left: 8px;
+    letter-spacing: 0.06em;
+    vertical-align: 2px;
+  }
+  @media (max-width: 720px) {
+    .theme { grid-template-columns: 40px 1fr; gap: 0 14px; }
+    .theme-name { font-size: 21px; }
+  }
+
+  .badges {
+    display: inline-flex; gap: 6px; align-items: center;
+    margin-left: auto;
+  }
+  .heat-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+  .heat-tag.high { color: var(--hot); background: var(--hot-glow); }
+  .heat-tag.mid  { color: var(--warn); background: rgba(217,166,74,0.10); }
+  .heat-tag.low  { color: var(--ink-mute); background: var(--bg-elev); }
+  .heat-tag::before {
+    content: ""; width: 5px; height: 5px;
+    background: currentColor; border-radius: 50%;
+  }
+  .cross-tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--hot);
+    color: var(--hot);
+    border-radius: 2px;
+    font-weight: 600;
+  }
+
+  /* time-window badges — 24h / 7d hot indicators + tempo */
+  .win-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 2px;
+    font-weight: 600;
+    border: 1px solid currentColor;
+    background: transparent;
+  }
+  .win-tag .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: currentColor;
+  }
+  .win-tag.win-24h { color: var(--hot); }
+  .win-tag.win-7d  { color: var(--cool); }
+  .win-tag.off { opacity: 0.32; }
+  .win-tag.off .dot { background: transparent; border: 1px solid currentColor; }
+
+  .tempo-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: "Noto Serif SC", serif;
+    font-weight: 700; font-size: 11.5px;
+    letter-spacing: 0.06em;
+    padding: 3px 9px;
+    border-radius: 2px;
+  }
+  .tempo-tag.new          { color: var(--hot);  background: var(--hot-glow); }
+  .tempo-tag.accelerating { color: #fff;        background: var(--hot); }
+  .tempo-tag.sustained    { color: var(--cool); background: rgba(53,101,136,0.12); }
+  .tempo-tag.fading       { color: var(--ink-mute); background: var(--bg-elev); }
+  :root[data-theme="dark"] .tempo-tag.sustained { background: rgba(91,141,184,0.16); }
+  .tempo-tag::before {
+    content: ""; width: 6px; height: 6px;
+    background: currentColor; border-radius: 50%;
+  }
+  .tempo-tag.accelerating::before { background: #fff; animation: pulse 1.6s infinite; }
+
+  /* tickers — horizontal chips */
+  .tickers {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 14px;
+  }
+  .tk {
+    display: inline-flex; align-items: baseline; gap: 8px;
+    padding: 5px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    line-height: 1.1;
+  }
+  .tk .code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .tk .name {
+    font-family: "Noto Serif SC", serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .tk .native {
+    font-size: 11px;
+    color: var(--ink-mute);
+  }
+
+  /* narrative — the headline hook */
+  .narrative {
+    font-family: "Noto Serif SC", serif;
+    font-size: 17.5px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 0 0 14px;
+    font-weight: 400;
+    letter-spacing: -0.003em;
+  }
+
+  /* details — collapsible meta block */
+  details.detail {
+    margin-top: 6px;
+    border-top: 1px dashed var(--rule-soft);
+    padding-top: 10px;
+  }
+  details.detail summary {
+    list-style: none;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    user-select: none;
+  }
+  details.detail summary::-webkit-details-marker { display: none; }
+  details.detail summary::before {
+    content: "+";
+    width: 14px; height: 14px;
+    border: 1px solid var(--ink-mute);
+    border-radius: 2px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    line-height: 1;
+    transition: transform .15s;
+  }
+  details.detail[open] summary::before { content: "−"; }
+  details.detail summary:hover { color: var(--ink); }
+  details.detail summary:hover::before { border-color: var(--ink); }
+
+  .detail-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 10px 16px;
+  }
+  .detail-grid dt {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    padding-top: 3px;
+  }
+  .detail-grid dd {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .detail-grid dd ul {
+    list-style: none; padding: 0; margin: 0;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .detail-grid dd ul li {
+    padding-left: 14px;
+    position: relative;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .detail-grid dd ul li::before {
+    content: ""; position: absolute; left: 0; top: 9px;
+    width: 6px; height: 1px; background: var(--ink-mute);
+  }
+  .src-pill {
+    display: inline-flex;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px; letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    padding: 2px 7px;
+    background: var(--bg-elev);
+    border-radius: 2px;
+    margin-right: 4px;
+  }
+  @media (max-width: 720px) {
+    .detail-grid { grid-template-columns: 1fr; gap: 4px; }
+    .detail-grid dt { padding-top: 0; }
+  }
+
+  /* fallback */
+  .raw-fallback {
+    margin: 16px 0; padding: 16px;
+    border: 1px dashed var(--rule);
+    border-radius: 3px;
+    background: var(--bg-card);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    white-space: pre-wrap;
+  }
+
+  /* status banners — failure / degraded */
+  .status-banner {
+    margin: 0 0 18px;
+    padding: 12px 16px;
+    border-radius: 3px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .status-banner .banner-title {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .status-banner .banner-body { color: var(--ink-soft); }
+  .status-banner .banner-body code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    background: var(--bg-elev);
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+  .status-banner .banner-errors {
+    margin: 6px 0 0; padding-left: 18px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+  }
+  .status-banner.banner-failed {
+    background: var(--hot-glow);
+    border-left: 3px solid var(--hot);
+  }
+  .status-banner.banner-failed .banner-title { color: var(--hot); }
+  .status-banner.banner-degraded {
+    background: rgba(217,166,74,0.10);
+    border-left: 3px solid var(--warn);
+  }
+  .status-banner.banner-degraded .banner-title { color: var(--warn); }
+
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="shell masthead">
+    <a class="brand" href="./index.html">
+      <span class="mark"></span>
+      <span class="name-cn">叙事观测</span>
+      <span class="tagline">散户题材热度榜</span>
+    </a>
+    <nav class="topnav">
+      <a href="./index.html">归档</a>
+      <a href="./feed.xml">RSS</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="切换主题">◐</button>
+    </nav>
+  </header>
+
+  <main class="shell" style="flex:1;">
+    
+<article class="cover">
+  <div class="meta-row">
+    <span class="pulse"></span>
+    <span class="vol">VOL.2026 · NO.25</span>
+    <span>May 19, 2026 · 23:48</span>
+    <span style="margin-left:auto; color: var(--ink-soft);">三市场观测 · 3 markets</span>
+  </div>
+  <h1>今日，散户在<br><span class="accent">押注什么。</span></h1>
+  <p class="deck">今日横扫美、台、韩三地散户公开讨论与资金流向，整理为一张题材热度榜。</p>
+</article>
+
+
+<section class="heat-strip">
+  <div class="heat-strip-label">今日最热</div>
+  <div class="heat-strip-grid">
+    
+    <a class="heat-tile" href="#m-us" style="--hot-pct:1.0">
+      <span class="rank"><span class="market">美股</span>· 01</span>
+      <span class="name">AI数据中心与算力轮动</span>
+      <span class="ticks">$HIVE $NVDA</span>
+    </a>
+    
+    <a class="heat-tile" href="#m-tw" style="--hot-pct:1.0">
+      <span class="rank"><span class="market">台股</span>· 02</span>
+      <span class="name">AI ASIC与先进封装</span>
+      <span class="ticks">2454.TW 2330.TW 3189.TW</span>
+    </a>
+    
+    <a class="heat-tile" href="#m-kr" style="--hot-pct:1.0">
+      <span class="rank"><span class="market">韩股</span>· 03</span>
+      <span class="name">比特币</span>
+      <span class="ticks">$BTC</span>
+    </a>
+    
+    <a class="heat-tile" href="#m-kr" style="--hot-pct:1.0">
+      <span class="rank"><span class="market">韩股</span>· 04</span>
+      <span class="name">SK海力士与半导体</span>
+      <span class="ticks">000660.KS 005930.KS</span>
+    </a>
+    
+    <a class="heat-tile" href="#m-us" style="--hot-pct:0.86">
+      <span class="rank"><span class="market">美股</span>· 05</span>
+      <span class="name">埃博拉病毒疫情爆发</span>
+      <span class="ticks">$GOVX $VRAX</span>
+    </a>
+    
+    <a class="heat-tile" href="#m-us" style="--hot-pct:0.86">
+      <span class="rank"><span class="market">美股</span>· 06</span>
+      <span class="name">能源油气板块强势</span>
+      <span class="ticks">$XLE $VLO</span>
+    </a>
+    
+  </div>
+</section>
+
+
+<div class="markets-wrap">
+  <aside class="rail">
+    
+    <a class="rail-item" href="#m-us" data-market="us">
+      <span class="rail-num">M.01</span>
+      <span class="rail-cn">美股</span>
+      <span class="rail-count mono">6</span>
+      <span class="rail-en">United States</span>
+    </a>
+    
+    <a class="rail-item" href="#m-tw" data-market="tw">
+      <span class="rail-num">M.02</span>
+      <span class="rail-cn">台股</span>
+      <span class="rail-count mono">5</span>
+      <span class="rail-en">Taiwan</span>
+    </a>
+    
+    <a class="rail-item" href="#m-kr" data-market="kr">
+      <span class="rail-num">M.03</span>
+      <span class="rail-cn">韩股</span>
+      <span class="rail-count mono">6</span>
+      <span class="rail-en">South Korea</span>
+    </a>
+    
+  </aside>
+
+  <div class="markets-content">
+    
+    <section class="market" id="m-us">
+      <header class="market-head">
+        <h2>
+          <span class="en">M.01 · United States</span>
+          美股
+        </h2>
+        <div class="stat-strip">
+          <div class="stat"><span class="v mono">6</span><span>题材</span></div>
+          <div class="stat"><span class="v mono">1</span><span>跨源</span></div>
+          <div class="stat"><span class="v mono">11</span><span>标的</span></div>
+        </div>
+      </header>
+
+      
+
+      
+
+      
+      <div class="themes">
+        
+        <article class="theme " data-heat="high">
+          <div class="num-block">
+            <span class="num">01</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">埃博拉病毒疫情爆发<span class="native">Ebola outbreak</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag new">新冒头</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d off" title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">$GOVX</span>
+                <span class="name">GeoVax</span>
+                <span class="native">GOVX</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">$VRAX</span>
+                <span class="name">Virax Biolabs</span>
+                <span class="native">VRAX</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">WHO宣布刚果埃博拉PHEIC，低流通疫苗股出现零售短线挤压。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>5/18 Markets Today帖点赞超2-4k，GOVX/VRAX涨幅帖高赞跟风</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme cross" data-heat="high">
+          <div class="num-block">
+            <span class="num">02</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">AI数据中心与算力轮动<span class="native">AI data center rotation</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag accelerating">加速中</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                <span class="cross-tag">跨源</span>
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">$HIVE</span>
+                <span class="name">Hive Digital</span>
+                <span class="native">HIVE</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">$NVDA</span>
+                <span class="name">英伟达</span>
+                <span class="native">NVDA</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">半导获利了结后资金转向AI机房、液冷及基础设施，HIVE 320MW项目催化明显。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@TradersAscent 5/18帖提及HIVE与IREN合同，点赞200+；7d窗口NVDA持续主导</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="high">
+          <div class="num-block">
+            <span class="num">03</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">能源油气板块强势<span class="native">Energy/oil &amp; gas</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag new">新冒头</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d off" title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">$XLE</span>
+                <span class="name">能源精选股</span>
+                <span class="native">XLE</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">$VLO</span>
+                <span class="name">Valero Energy</span>
+                <span class="native">VLO</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">XLE/XOP领涨，油服上游个股创52周新高，视作防御与通胀对冲。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@RealSimpleAriel 5/18帖点赞247，列出6只个股新高</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="high">
+          <div class="num-block">
+            <span class="num">04</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">伊朗地缘政治催化反转<span class="native">Iran geopolitical reversal</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag fading">退潮</span>
+                
+                <span class="win-tag win-24h off" title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">$SPY</span>
+                <span class="name">SPDR标普500</span>
+                <span class="native">SPY</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">$XOM</span>
+                <span class="name">埃克森美孚</span>
+                <span class="native">XOM</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">特朗普与伊朗谈判表态抹平抛售，美股单小时暴拉5000亿美元。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@BullTheoryio 5/18帖获2858赞，提及5000亿市值回升</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="mid">
+          <div class="num-block">
+            <span class="num">05</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">低浮动并购财报短线<span class="native">Low float M&amp;A momentum</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag new">新冒头</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d off" title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag mid">mid</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">$RAMP</span>
+                <span class="name">LiveRamp</span>
+                <span class="native">RAMP</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">$NXXT</span>
+                <span class="name">Nextech</span>
+                <span class="native">NXXT</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">RAMP被收购、NXXT财报超预期，低市值股出现零售抱团挤压。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>5/18 pre-market涨幅榜帖直接列出RAMP收购消息</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="mid">
+          <div class="num-block">
+            <span class="num">06</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">GME收购eBay meme复兴<span class="native">GME eBay acquisition meme</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag fading">退潮</span>
+                
+                <span class="win-tag win-24h off" title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag mid">mid</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">$GME</span>
+                <span class="name">GameStop</span>
+                <span class="native">GME</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">GameStop宣布收购远大于自身的eBay，点燃老meme股做多热情。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>Financial Times 5/13帖获409赞并大量转发</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+      </div>
+      
+    </section>
+    
+    <section class="market" id="m-tw">
+      <header class="market-head">
+        <h2>
+          <span class="en">M.02 · Taiwan</span>
+          台股
+        </h2>
+        <div class="stat-strip">
+          <div class="stat"><span class="v mono">5</span><span>题材</span></div>
+          <div class="stat"><span class="v mono">1</span><span>跨源</span></div>
+          <div class="stat"><span class="v mono">10</span><span>标的</span></div>
+        </div>
+      </header>
+
+      
+
+      
+
+      
+      <div class="themes">
+        
+        <article class="theme cross" data-heat="high">
+          <div class="num-block">
+            <span class="num">01</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">AI ASIC与先进封装</h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag accelerating">加速中</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                <span class="cross-tag">跨源</span>
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">2454.TW</span>
+                <span class="name">联发科</span>
+                <span class="native">聯發科</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">2330.TW</span>
+                <span class="name">台积电</span>
+                <span class="native">台積電</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">3189.TW</span>
+                <span class="name">景硕</span>
+                <span class="native">景碩</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">联发科AI ASIC 2027年放量数十亿美元，台积电CoWoS产能吃紧至2028年，ABF基板与先进封装同步受惠。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@BlueJay87476298转联发科call memo，AI ASIC 2027放量首家美国hyperscaler客户2026年底量产；@Leoskie_L帖提及CoWoS排到2028。</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="high">
+          <div class="num-block">
+            <span class="num">02</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">台积电供应链与释股效应</h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag new">新冒头</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d off" title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">2330.TW</span>
+                <span class="name">台积电</span>
+                <span class="native">台積電</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">5347.TW</span>
+                <span class="name">世界先进</span>
+                <span class="native">世界先進</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">3711.TW</span>
+                <span class="name">日月光投控</span>
+                
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">台积电出售世界先进约8.1%股权聚焦先进制程，成熟制程股短线震荡但供应链护城河仍获肯定。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@yeshuaformosa帖强调台湾AI晶片良率与HBM整合优势；@wearn_tw多帖讨论释股导致世界先进跌停。</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="mid">
+          <div class="num-block">
+            <span class="num">03</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">低轨卫星军工题材</h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag new">新冒头</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d off" title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag mid">mid</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">2317.TW</span>
+                <span class="name">鸿海</span>
+                <span class="native">鴻海</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">2454.TW</span>
+                <span class="name">联发科</span>
+                <span class="native">聯發科</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">低轨卫星逆势突围，资金无视大盘重挫持续卡位军工与卫星题材。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@wearn_tw帖：「低轨卫星、机器人、AI设备三路喷发，大户一档接一档锁涨停」。</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="high">
+          <div class="num-block">
+            <span class="num">04</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">HBM记忆体景气转折</h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag sustained">本周持续</span>
+                
+                <span class="win-tag win-24h off" title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">2344.TW</span>
+                <span class="name">华邦电</span>
+                <span class="native">華邦電</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">2408.TW</span>
+                <span class="name">南亚科</span>
+                <span class="native">南亞科</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">Seagate CEO警示记忆体景气逼近高峰，外资狂砍华邦电近5万张，散户关注短期回档或长期转折。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@Leoskie_L 5/19帖详述外资砍记忆体、投信微量接单；@fi56622380讨论SRAM与AI ASIC异质整合。</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="mid">
+          <div class="num-block">
+            <span class="num">05</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">AIDC电源与储能</h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag sustained">本周持续</span>
+                
+                <span class="win-tag win-24h off" title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag mid">mid</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">2308.TW</span>
+                <span class="name">台达电</span>
+                <span class="native">台達電</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">1504.TW</span>
+                <span class="name">东元</span>
+                <span class="native">東元</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">AI资料中心电力需求爆发，储能与电源模组被视为最值得中线布局的题材。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@Stevensun520417帖点名AIDC电源/储能为四大方向之首。</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+      </div>
+      
+    </section>
+    
+    <section class="market" id="m-kr">
+      <header class="market-head">
+        <h2>
+          <span class="en">M.03 · South Korea</span>
+          韩股
+        </h2>
+        <div class="stat-strip">
+          <div class="stat"><span class="v mono">6</span><span>题材</span></div>
+          <div class="stat"><span class="v mono">2</span><span>跨源</span></div>
+          <div class="stat"><span class="v mono">7</span><span>标的</span></div>
+        </div>
+      </header>
+
+      
+
+      
+
+      
+      <div class="themes">
+        
+        <article class="theme cross" data-heat="high">
+          <div class="num-block">
+            <span class="num">01</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">比特币<span class="native">비트코인</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag accelerating">加速中</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                <span class="cross-tag">跨源</span>
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">$BTC</span>
+                <span class="name">比特币</span>
+                <span class="native">비트코인</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">韩国散户视比特币为避险与轮动首选，24h与7d内多位KOL高赞帖反复呼吁买入。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@pathofsuccess92与@ohmahahm多帖点赞超200+，提及从内存股轮动至比特币</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme cross" data-heat="high">
+          <div class="num-block">
+            <span class="num">02</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">SK海力士与半导体<span class="native">SK하이닉스 &amp; 반도체</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag accelerating">加速中</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                <span class="cross-tag">跨源</span>
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">000660.KS</span>
+                <span class="name">SK海力士</span>
+                <span class="native">SK하이닉스</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">005930.KS</span>
+                <span class="name">三星电子</span>
+                <span class="native">삼성전자</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">SK海力士市值逼近三星，KOSPI强攻下散户热议过热信号与持续持有。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@PolarisLog引用하나증권帖点赞756+，讨论하이닉스超越三星后操作逻辑</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="high">
+          <div class="num-block">
+            <span class="num">03</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">韩国券商股<span class="native">증권주</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag new">新冒头</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d off" title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">006800.KS</span>
+                <span class="name">未来资产证券</span>
+                <span class="native">미래에셋증권</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">016360.KS</span>
+                <span class="name">三星证券</span>
+                <span class="native">삼성증권</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">KOSPI交易量自3月爆发，散户重点布局券商股期待手续费反弹。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@Myeongsu_bean帖点赞237+，列出Top Tier券商并附交易量图表</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="mid">
+          <div class="num-block">
+            <span class="num">04</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">英伟达与美股AI<span class="native">엔비디아 &amp; 美股 AI</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag new">新冒头</span>
+                
+                <span class="win-tag win-24h " title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d off" title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag mid">mid</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">$NVDA</span>
+                <span class="name">英伟达</span>
+                <span class="native">엔비디아</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">$AMD</span>
+                <span class="name">超微半导体</span>
+                <span class="native">AMD</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">서학개미聚焦英伟达财报前夜及特朗普地缘消息，AI芯片仍为核心配置。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@Eddie9132151与@datastaion帖讨论NVDA 5/20财报及特朗普伊朗消息</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_24h</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="high">
+          <div class="num-block">
+            <span class="num">05</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">KOSPI半导体国民配当<span class="native">반도체 이익 국민배당</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag fading">退潮</span>
+                
+                <span class="win-tag win-24h off" title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag high">high</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">005930.KS</span>
+                <span class="name">三星电子</span>
+                <span class="native">삼성전자</span>
+              </span>
+              
+              <span class="tk">
+                <span class="code">000660.KS</span>
+                <span class="name">SK海力士</span>
+                <span class="native">SK하이닉스</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">青瓦台半导体利益国民配当言论引发KOSPI单日暴跌5%，散户聚焦政策冲击。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@ysh1yo2848多帖浏览7万+，分析外人抛售与期权到期风险</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+        <article class="theme " data-heat="mid">
+          <div class="num-block">
+            <span class="num">06</span>
+            <div class="heat-gauge"></div>
+          </div>
+          <div class="theme-body">
+            <header class="theme-head">
+              <h3 class="theme-name">三星电子劳资冲突<span class="native">삼성전자 노조</span></h3>
+              <div class="badges">
+                
+                  <span class="tempo-tag fading">退潮</span>
+                
+                <span class="win-tag win-24h off" title="24h 窗口">
+                  <span class="dot"></span>24H
+                </span>
+                <span class="win-tag win-7d " title="7d 窗口">
+                  <span class="dot"></span>7D
+                </span>
+                
+                <span class="heat-tag mid">mid</span>
+              </div>
+            </header>
+
+            
+            <div class="tickers">
+              
+              <span class="tk">
+                <span class="code">005930.KS</span>
+                <span class="name">三星电子</span>
+                <span class="native">삼성전자</span>
+              </span>
+              
+            </div>
+            
+
+            <p class="narrative">三星电子高薪与工会罢工传闻持续发酵，散户讨论内部福利与罢工风险。</p>
+
+            
+            <details class="detail">
+              <summary>展开证据 · evidence</summary>
+              <dl class="detail-grid">
+                
+                <dt>线索</dt>
+                <dd><ul><li>@Lucky_noda帖点赞168+，提及SK海力士模拟考卷成为公司福利商城畅销品</li></ul></dd>
+                
+                
+                <dt>数据源</dt>
+                <dd><span class="src-pill">xai_x_7d</span></dd>
+                
+              </dl>
+            </details>
+            
+          </div>
+        </article>
+        
+      </div>
+      
+    </section>
+    
+  </div>
+</div>
+
+<script>
+(function() {
+  // active rail item on scroll
+  var rail = document.querySelectorAll('.rail-item');
+  var sections = Array.from(rail).map(function(a) {
+    var code = a.getAttribute('data-market');
+    return code ? document.getElementById('m-' + code) : null;
+  }).filter(Boolean);
+  if (!sections.length) return;
+  function activate() {
+    var y = window.scrollY + 120;
+    var idx = 0;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].offsetTop <= y) idx = i;
+    }
+    rail.forEach(function(t, i) { t.classList.toggle('active', i === idx); });
+  }
+  window.addEventListener('scroll', activate, {passive: true});
+  activate();
+})();
+</script>
+
+  </main>
+
+  <footer class="shell colophon">
+    <div class="row">
+      <div class="disclaimer">自动生成 · 仅供观测 · 非投资建议</div>
+      <div class="src">x_search · reddit · ptt · krx · naver</div>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function() {
+  var KEY = 'no.theme';
+  var html = document.documentElement;
+  var btn = document.getElementById('themeToggle');
+  var saved = localStorage.getItem(KEY);
+  if (saved === 'light' || saved === 'dark') html.setAttribute('data-theme', saved);
+  btn && btn.addEventListener('click', function() {
+    var cur = html.getAttribute('data-theme') || 'light';
+    var next = cur === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem(KEY, next);
+  });
+})();
+</script>
+</body>
+</html>
